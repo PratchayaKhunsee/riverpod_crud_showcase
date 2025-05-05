@@ -1,0 +1,109 @@
+part of '../main.dart';
+
+/// วิดเจ็ตแสดงไอเท็มรายการ CRUD จากตัวแปร [crudModelListProvider]
+class CrudModelListView extends StatefulWidget {
+  const CrudModelListView({super.key});
+
+  @override
+  State<StatefulWidget> createState() => CrudModelListViewState();
+}
+
+class CrudModelListViewState extends State<CrudModelListView> {
+  /// ตัวควบคุม [ExpansionTile]
+  final Map<CrudModel<String>, ExpansionTileController> _expansionTileControllers = {};
+
+  /// ต้องมี widget key สำหรับ [ExpansionTile] ด้วย เนื่องจากเวลาลบรายการ มีบั๊คที่ทำให้รายการถถัดไปจากรายการที่ลบ
+  /// จะแสดง UI เปิดแท็บอยู่ ต้องระบุ key ให้สอดคล้องกับรายการ CRUD
+  final _expansionTileKeys = <CrudModel<String>, GlobalKey>{};
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _expansionTileControllers.clear();
+    _expansionTileKeys.clear();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final list = ref.watch(crudModelListProvider);
+
+        if (!list.isReady) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (list.getLength() == 0) {
+          return const Center(child: Text('No items'));
+        }
+
+        return ListView.builder(
+          itemCount: list.getLength(),
+          itemBuilder: (context, index) {
+            final d = list.read(index);
+            final expansionTileController = _expansionTileControllers[d] ??= ExpansionTileController();
+
+            return ExpansionTile(
+              key: _expansionTileKeys[d] ??= GlobalKey(),
+              controller: expansionTileController,
+              onExpansionChanged: (expanded) {
+                if (expanded) {
+                  for (final c in _expansionTileControllers.values) {
+                    if (c != expansionTileController) {
+                      c.collapse();
+                    }
+                  }
+                }
+              },
+              title: Text(d.data),
+              children: [
+                Container(
+                  margin: const EdgeInsets.all(5),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextButton.icon(
+                          icon: const Icon(Icons.edit, color: Colors.grey),
+                          label: const Text('Edit'),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => CrudUpdatingDialog(index: index),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: TextButton.icon(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          label: const Text('Delete'),
+                          onPressed: () => showDialog(
+                            context: context,
+                            builder: (context) => CrudDeletingDialog(
+                              index: index,
+                              onDelete: () {
+                                _expansionTileKeys.remove(d);
+                                _expansionTileControllers.remove(d);
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
