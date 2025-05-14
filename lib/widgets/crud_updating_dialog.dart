@@ -3,7 +3,8 @@ part of '../main.dart';
 /// ไดอะล็อกแก้ไขรายการ CRUD
 class CrudUpdatingDialog extends ConsumerStatefulWidget {
   final int index;
-  const CrudUpdatingDialog({super.key, required this.index});
+  final void Function()? onUpdate;
+  const CrudUpdatingDialog({super.key, required this.index, this.onUpdate});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => CrudUpdatingDialogState();
@@ -77,8 +78,9 @@ class CrudUpdatingDialogState extends ConsumerState<CrudUpdatingDialog> {
 
     try {
       final updated = await list.update(widget.index, controller.text);
-      if (updated.success && mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
+      if (updated.success) {
+        widget.onUpdate?.call();
+        if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
       } else if (mounted) {
         setState(() {
           errorMessage = 'Error, try again';

@@ -74,7 +74,12 @@ class CrudModelListViewState extends State<CrudModelListView> {
                             showDialog(
                               context: context,
                               barrierDismissible: false,
-                              builder: (context) => CrudUpdatingDialog(index: index),
+                              builder: (context) => CrudUpdatingDialog(
+                                index: index,
+                                onUpdate: () {
+                                  _removeExpansionTilesWhenUpdated(d);
+                                },
+                              ),
                             );
                           },
                         ),
@@ -89,8 +94,7 @@ class CrudModelListViewState extends State<CrudModelListView> {
                             builder: (context) => CrudDeletingDialog(
                               index: index,
                               onDelete: () {
-                                _expansionTileKeys.remove(d);
-                                _expansionTileControllers.remove(d);
+                                _removeExpansionTilesWhenUpdated(d);
                               },
                             ),
                           ),
@@ -105,5 +109,12 @@ class CrudModelListViewState extends State<CrudModelListView> {
         );
       },
     );
+  }
+
+  /// จะต้องลบ [_expansionTileKeys] และ [_expansionTileControllers]  ประจำรายการ [model] ก่อน
+  /// เพื่อป้องกันการเรียกใช้ซ้ำหลังจากที่รายการไม่ได้ใช้งานแล้ว
+  void _removeExpansionTilesWhenUpdated(CrudModel<String> model) {
+    _expansionTileKeys.remove(model);
+    _expansionTileControllers.remove(model);
   }
 }
