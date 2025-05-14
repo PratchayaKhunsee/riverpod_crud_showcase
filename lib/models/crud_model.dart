@@ -65,6 +65,8 @@ class CrudModelList<T> extends ChangeNotifier {
 
   /// ดึงตัวแปร [_pref]
   Future<SharedPreferences> _getPref() async {
+    if (_prefLock?.isCompleted == false) await _prefLock?.future;
+
     final prevPrev = _pref;
     if (prevPrev != null) return prevPrev;
 
